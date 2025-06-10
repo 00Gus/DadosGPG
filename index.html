@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎲 Simulaciones de Dados – Uniforme & Bernoulli</title>
+
+  <!-- ============================
+       Librerías Externas (CDN)
+  ============================ -->
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lottie para animación en cabecera -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <!-- ============================
+       Hojas de Estilo
+  ============================ -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============================
+       HEADER CON ANIMACIÓN LOTTIE
+  ============================ -->
+  <header>
+    <div class="header-content">
+      <lottie-player
+        src="https://assets10.lottiefiles.com/packages/lf20_il2ppmx6.json"
+        background="transparent"
+        speed="1"
+        style="width: 80px; height: 80px;"
+        loop
+        autoplay
+      ></lottie-player>
+      <h1>Simulaciones de Dados</h1>
+      <p>Distribución Uniforme &mdash; Distribución de Bernoulli</p>
+    </div>
+    <!-- Toggle Modo Claro/Oscuro -->
+    <div class="toggle-theme" id="toggle-theme" title="Cambiar tema claro/oscuro">
+      🌙
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================
+         CONTROLES GENERALES (ajustes globales)
+    ============================ -->
+    <section id="controles-globales" class="card">
+      <h2>⚙️ Configuración General</h2>
+      <div class="subcard">
+        <!-- Número de simulaciones por batch -->
+        <label for="input-num-simulaciones">Número de simulaciones por clic:</label>
+        <input type="number" id="input-num-simulaciones" min="1" max="1000" value="1"/>
+
+        <!-- Número de caras del dado -->
+        <label for="input-num-caras">Número de caras del dado:</label>
+        <input type="number" id="input-num-caras" min="2" max="20" value="6"/>
+
+        <!-- Velocidad de animación -->
+        <label for="slider-velocidad">Velocidad de animación:</label>
+        <input type="range" id="slider-velocidad" min="0.2" max="2" step="0.1" value="1"/>
+        <span id="label-velocidad">1×</span>
+
+        <!-- Botón de Reset -->
+        <button id="btn-reset" class="btn-warning" title="Reiniciar todo (frecuencias, logros y contadores)">🔄 Reset General</button>
+      </div>
+    </section>
+
+    <!-- ============================
+         DISTRIBUCIÓN UNIFORME (UN DADO)
+    ============================ -->
+    <section id="uniforme-section" class="card">
+      <h2>🎲 Uniforme (1 dado)</h2>
+      <div class="subcard">
+        <!-- Tarjeta informativa (tooltip) -->
+        <div class="info-box">
+          <span class="info-icon" title="En la distribución uniforme, cada cara del dado tiene probabilidad igual.">
+            ℹ️
+          </span>
+          <p>Simula un dado con <span id="label-caras-uniforme">6</span> caras.</p>
+        </div>
+
+        <!-- Visual del dado (3D si 6 caras, si no: número grande) -->
+        <div class="dice-container">
+          <div id="cube-uniforme" class="cube" data-caras="6">
+            <div class="face front">1</div>
+            <div class="face back">6</div>
+            <div class="face right">2</div>
+            <div class="face left">5</div>
+            <div class="face top">3</div>
+            <div class="face bottom">4</div>
+          </div>
+          <div id="numero-uniforme" class="numero-large" style="display:none;">1</div>
+        </div>
+
+        <!-- Botón para lanzar -->
+        <button id="btn-lanzar-uniforme" class="btn" title="Lanza el dado las veces que indiquen los controles">Lanzar Uniforme</button>
+
+        <!-- Texto con resultado individual y estadísticas -->
+        <p id="uniforme-resultado" class="resultado-text">—</p>
+        <div id="stats-uniforme" class="stats-box">
+          <p>Total tiradas: <span id="count-uniforme">0</span></p>
+          <p>Media: <span id="mean-uniforme">0</span></p>
+          <p>Mediana: <span id="median-uniforme">0</span></p>
+          <p>Moda: <span id="mode-uniforme">—</span></p>
+          <p>Varianza: <span id="var-uniforme">0</span></p>
+          <p>Desv. estándar: <span id="std-uniforme">0</span></p>
+        </div>
+
+        <!-- Histograma uniforme -->
+        <div class="histogram-wrapper">
+          <h3>Histograma de frecuencias</h3>
+          <canvas id="chart-uniforme" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Gráfica de media móvil -->
+        <div class="histogram-wrapper">
+          <h3>Media móvil (últimas 20 tiradas)</h3>
+          <canvas id="chart-moving-average" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Gráfica de distrib. acumulada -->
+        <div class="histogram-wrapper">
+          <h3>Distribución acumulada</h3>
+          <canvas id="chart-cumulative" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Comparación teórica vs empírica -->
+        <div class="histogram-wrapper">
+          <h3>Teórica vs Empírica</h3>
+          <canvas id="chart-theoretical-vs-empirical" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Exportar CSV -->
+        <button id="btn-export-uniforme" class="btn-export" title="Descarga un CSV con todas las tiradas">📥 Exportar CSV</button>
+      </div>
+    </section>
+
+    <!-- ============================
+         DISTRIBUCIÓN DE BERNOULLI (DOS DADOS)
+    ============================ -->
+    <section id="bernoulli-section" class="card">
+      <h2>🎲 Bernoulli (2 dados)</h2>
+      <div class="subcard">
+        <!-- Tarjeta informativa (tooltip) -->
+        <div class="info-box">
+          <span class="info-icon" title="Define éxito: la suma de los dos dados cumple la condición seleccionada.">
+            ℹ️
+          </span>
+          <p>Condición de Éxito: <span id="label-criterio">Suma ≥</span>
+            <input type="number" id="input-criterio" min="2" max="40" value="9" style="width:60px;"/> 
+          </p>
+        </div>
+
+        <!-- Visual de los dos dados -->
+        <div class="dice-container">
+          <div id="cube1-bernoulli" class="cube" data-caras="6">
+            <div class="face front">1</div>
+            <div class="face back">6</div>
+            <div class="face right">2</div>
+            <div class="face left">5</div>
+            <div class="face top">3</div>
+            <div class="face bottom">4</div>
+          </div>
+          <div id="cube2-bernoulli" class="cube" data-caras="6">
+            <div class="face front">1</div>
+            <div class="face back">6</div>
+            <div class="face right">2</div>
+            <div class="face left">5</div>
+            <div class="face top">3</div>
+            <div class="face bottom">4</div>
+          </div>
+          <!-- Si el usuario elige caras ≠ 6, se verá un número grande en su lugar -->
+          <div id="numero1-bernoulli" class="numero-large" style="display:none;">1</div>
+          <div id="numero2-bernoulli" class="numero-large" style="display:none;">1</div>
+        </div>
+
+        <!-- Botón para lanzar -->
+        <button id="btn-lanzar-bernoulli" class="btn" title="Lanza los dos dados las veces que indiquen los controles">Lanzar Bernoulli</button>
+
+        <!-- Texto con resultado individual y estadísticas -->
+        <p id="bernoulli-resultado" class="resultado-text">—</p>
+        <div id="stats-bernoulli" class="stats-box">
+          <p>Total tiradas: <span id="count-bernoulli">0</span></p>
+          <p>Éxitos: <span id="count-exitos">0</span></p>
+          <p>Fracaso: <span id="count-fracasos">0</span></p>
+          <p>Media (suma): <span id="mean-bernoulli">0</span></p>
+          <p>Varianza (suma): <span id="var-bernoulli">0</span></p>
+          <p>Desv. estándar (suma): <span id="std-bernoulli">0</span></p>
+        </div>
+
+        <!-- Histograma Bernoulli -->
+        <div class="histogram-wrapper">
+          <h3>Histograma Éxitos / Fracasos</h3>
+          <canvas id="chart-bernoulli" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Gráfica Comparación prob. teórica vs empírica Bernoulli -->
+        <div class="histogram-wrapper">
+          <h3>Probabilidad Teórica vs Empírica</h3>
+          <canvas id="chart-bern-theoretical-vs-empirical" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Exportar CSV Bernoulli -->
+        <button id="btn-export-bernoulli" class="btn-export" title="Descarga un CSV con todas las tiradas de Bernoulli">📥 Exportar CSV</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================
+       FOOTER
+  ============================ -->
+  <footer>
+    <p>© 2025 Gustavo Pérez Garduño – Simulaciones de Probabilidad y Estadística</p>
+  </footer>
+
+  <!-- ============================
+       Script principal
+  ============================ -->
+  <script src="script.js"></script>
+</body>
+</html>
